@@ -126,7 +126,7 @@ body.shared>nav,body.shared>main:not(#shared),body.shared>.dock{display:none}
   </div>
   <div class="meter"><i id="mt"></i></div>
   <div class="grid" id="grid"></div>
-  <p class="note">Share links embed small PDFs and require this app to be hosted at a public URL. Large links may be cut off by browsers or messaging apps; use Portable and send its downloaded HTML file for larger PDFs.</p>
+  <p class="note">Share links embed small PDFs and require this app to be hosted at a public URL. Large PDFs can be opened or saved here, but sharing them as a public link requires hosting the PDF or sending it as an attachment.</p>
 </main>
 
 <div class="dock" id="dock"><span id="dn"></span><button class="pill sm" id="bm">Merge</button><button class="pill sm ghost" id="bd">Delete</button><button class="pill sm ghost" id="bc">✕</button></div>
@@ -159,7 +159,7 @@ async function shareHref(r) {
   const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
   const link = new URL(location.href);
   link.hash = new URLSearchParams({pdf: base64, name: r.name}).toString();
-  if (link.href.length > MAX_SHARED_LINK_LENGTH) throw new Error('This PDF makes a share link that may get cut off. Use Portable and send its downloaded HTML file instead.');
+  if (link.href.length > MAX_SHARED_LINK_LENGTH) throw new Error('This PDF is too large for a reliable share link. Open or save it here, or share the PDF as an attachment.');
   return link.href;
 }
 let tt; const toast = t => { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('on'), 2200); };
@@ -224,11 +224,6 @@ async function rotate(r) {
   const s = await load(r); s.getPages().forEach(p => p.setRotation(PDFLib.degrees((p.getRotation().angle + 90) % 360)));
   await ingest(new Blob([await s.save()], {type: 'application/pdf'}), r.name, r.id); render(); toast('Rotated 90°');
 }
-async function portable(r) {
-  const b64 = await new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result.split(',')[1]); f.readAsDataURL(r.blob); });
-  const html = '<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' + r.name.replace(/</g, '') + '</title><style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%}</style><iframe id=f></iframe><script>var s=atob("' + b64 + '"),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);document.getElementById("f").src=URL.createObjectURL(new Blob([u],{type:"application/pdf"}));<' + '/script>';
-  save(new Blob([html], {type: 'text/html'}), r.name.replace(/\.pdf$/i, '') + '.html'); toast('Portable page saved');
-}
 const EXP = [0, 36e5, 864e5, 6048e5];
 function cycle(r) { const cur = r.exp ? EXP.findIndex((d, i) => i && r.exp - Date.now() <= d) : 0; const n = (cur + 1) % EXP.length; r.exp = n ? Date.now() + EXP[n] : 0; put(r); render(); toast(n ? 'Self-destructs in ' + left(EXP[n]) : 'Expiry removed'); }
 async function remove(ids) { for (const id of ids) { await del(id); sel.delete(id); } recs = recs.filter(r => !ids.includes(r.id)); render(); }
@@ -246,10 +241,11 @@ function render() {
     ck.onclick = () => { sel.has(r.id) ? sel.delete(r.id) : sel.add(r.id); c.classList.toggle('sel'); dock(); };
     th.appendChild(ck);
     if (r.exp) { const ch = h('div', 'chip' + (r.exp - Date.now() < 36e5 ? ' hot' : ''), '⏳ ' + left(r.exp - Date.now())); th.appendChild(ch); }
-    const o = h('div', 'ov'); const op = h('button', 'pill sm', 'Open'); op.onclick = async () => {
-      const tab = window.open('about:blank', '_blank');
-      if (!tab) return toast('Allow pop-ups to open the share link');
-      try { tab.location.href = await shareHref(r); } catch (e) { tab.close(); toast(e.message); }
+    const o = h('div', 'ov'); const op = h('button', 'pill sm', 'Open'); op.onclick = () => {
+      const url = URL.createObjectURL(r.blob);
+      const tab = window.open(url, '_blank');
+      if (!tab) { URL.revokeObjectURL(url); return toast('Allow pop-ups to open this PDF'); }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     };
     const cp = h('button', 'pill sm ghost', 'Copy share link'); cp.onclick = async () => {
       let link;
@@ -259,7 +255,7 @@ function render() {
     o.append(op, cp); th.appendChild(o);
     c.append(th, h('div', 'nm', r.name), h('div', 'mt', [r.pages ? r.pages + ' pages' : '', fmt(r.size), r.words ? r.words.toLocaleString() + ' words · ' + Math.max(1, Math.round(r.words / 230)) + ' min' : ''].filter(Boolean).join(' · ')));
     if (ql && r.text) { const k = r.text.toLowerCase().indexOf(ql); if (k > -1) { const s = h('div', 'sn'); s.append('…' + r.text.slice(Math.max(0, k - 40), k), Object.assign(h('mark'), {textContent: r.text.slice(k, k + ql.length)}), r.text.slice(k + ql.length, k + ql.length + 60) + '…'); c.appendChild(s); } }
-    const row = h('div', 'row'); [['Rotate', () => rotate(r)], ['Split', () => split(r)], ['Timer', () => cycle(r)], ['Portable', () => portable(r)], ['Save', () => save(r.blob, r.name)], ['Delete', () => remove([r.id])]].forEach(([t, f]) => { const b = h('button', 'txt' + (t === 'Delete' ? ' del' : ''), t); b.onclick = f; row.appendChild(b); });
+    const row = h('div', 'row'); [['Rotate', () => rotate(r)], ['Split', () => split(r)], ['Timer', () => cycle(r)], ['Save', () => save(r.blob, r.name)], ['Delete', () => remove([r.id])]].forEach(([t, f]) => { const b = h('button', 'txt' + (t === 'Delete' ? ' del' : ''), t); b.onclick = f; row.appendChild(b); });
     c.appendChild(row); g.appendChild(c);
   });
   const P = recs.reduce((a, r) => a + r.pages, 0), W = recs.reduce((a, r) => a + r.words, 0);
@@ -292,7 +288,7 @@ function openSharedPdf() {
   document.body.classList.add('shared');
   try {
     const encoded = (params.get('pdf') || '').replace(/ /g, '+');
-    if (location.href.length > MAX_SHARED_LINK_LENGTH || !/^[A-Za-z0-9+/_-]*={0,2}$/.test(encoded)) throw new Error('This share link is too large or invalid. Create a smaller share link or use the Portable HTML file.');
+    if (location.href.length > MAX_SHARED_LINK_LENGTH || !/^[A-Za-z0-9+/_-]*={0,2}$/.test(encoded)) throw new Error('This share link is too large or invalid. Create a smaller share link or share the PDF as an attachment.');
     const unpadded = encoded.replace(/=+$/, '').replace(/-/g, '+').replace(/_/g, '/');
     if (unpadded.length % 4 === 1) throw new Error('This share link is invalid or incomplete');
     const base64 = unpadded + '='.repeat((4 - unpadded.length % 4) % 4);
