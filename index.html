@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PDF Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+:root{--bg:#fff;--ink:#0b0b0c;--mut:#8b8b92;--panel:#f5f5f6;--line:#ececee;--btn:#0b0b0c;--btnink:#fff;--err:#d92d20;--spring:cubic-bezier(.34,1.56,.64,1);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0b0c;--ink:#f5f5f6;--panel:#151517;--line:#232326;--btn:#f5f5f6;--btnink:#0b0b0c}}
+*{box-sizing:border-box}html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+nav{max-width:1180px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;gap:16px}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.04em;display:flex;align-items:center;gap:8px}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--ink);display:grid;place-items:center}
+.logo i svg{stroke:var(--bg)}
+.sp{flex:1}
+kbd{font:600 11px Inter,sans-serif;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.pill{border:0;background:var(--btn);color:var(--btnink);font:600 15px Inter,system-ui,sans-serif;padding:12px 22px;border-radius:99px;cursor:pointer;transition:transform .2s var(--spring),opacity .15s}
+.pill:hover{opacity:.86;transform:translateY(-1px)}.pill:active{transform:scale(.95)}
+.pill.sm{padding:8px 14px;font-size:13px}.pill.ghost{background:var(--panel);color:var(--ink)}
+.txt{border:0;background:none;color:var(--mut);font:500 13px Inter,sans-serif;cursor:pointer;padding:6px 8px;border-radius:8px;transition:.15s}
+.txt:hover{color:var(--ink);background:var(--line)}.txt.del:hover{color:var(--err)}
+main{max-width:1180px;margin:0 auto;padding:40px 24px 140px}
+h1{font-weight:700;font-size:clamp(40px,8vw,84px);line-height:1.02;letter-spacing:-.055em;margin:0;text-align:center}
+.t{display:inline-grid;place-items:center;width:.9em;height:.9em;border-radius:24%;vertical-align:-.1em;margin:0 .04em;color:#fff;animation:fl 4s ease-in-out infinite}
+.t:nth-of-type(2){animation-delay:-1.3s}.t:nth-of-type(3){animation-delay:-2.6s}
+@keyframes fl{50%{transform:translateY(-6%) rotate(-4deg)}}
+.t svg{width:52%;height:52%}.t.r{background:#ff3b4e}.t.b{background:#1a6bff}.t.y{background:#ffc400;color:#111}
+.sub{color:var(--mut);text-align:center;font-size:clamp(16px,2.2vw,19px);margin:24px auto 0;max-width:520px;line-height:1.45}
+.panel{margin-top:44px;background:var(--panel);border-radius:32px;padding:44px 24px;text-align:center;outline:2px dashed transparent;outline-offset:-14px;transition:outline-color .2s,transform .3s var(--spring)}
+.panel.over{outline-color:var(--mut);transform:scale(1.01)}
+.panel b{display:block;font-size:22px;letter-spacing:-.03em;margin-bottom:16px}
+.panel small{display:block;color:var(--mut);margin-top:14px;font-size:13px}
+#msg{min-height:18px}
+.bar{display:flex;align-items:center;gap:14px;margin:48px 0 18px;flex-wrap:wrap}
+.search{flex:1;min-width:220px;display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:99px;padding:0 18px;transition:box-shadow .2s}
+.search:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.search input{flex:1;border:0;background:none;outline:0;font:500 15px Inter,sans-serif;color:var(--ink);padding:14px 0}
+.stats{color:var(--mut);font-size:13px;font-weight:500}
+.meter{height:4px;border-radius:9px;background:var(--line);overflow:hidden;margin-bottom:22px}
+.meter i{display:block;height:100%;width:0;background:var(--ink);border-radius:9px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.card{background:var(--panel);border-radius:26px;padding:10px;position:relative;opacity:0;animation:in .55s var(--spring) forwards;animation-delay:calc(var(--i)*55ms);transition:transform .3s var(--spring),box-shadow .3s}
+@keyframes in{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 40px -18px rgba(0,0,0,.25)}
+.card.sel{box-shadow:0 0 0 2px var(--ink)}
+.th{aspect-ratio:3/4;border-radius:18px;background:#fff;overflow:hidden;position:relative;display:grid;place-items:center;color:#bbb}
+.th img{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.card:hover .th img{transform:scale(1.06)}
+.ck{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.9);border:1.5px solid #d0d0d4;cursor:pointer;display:grid;place-items:center;transition:.25s var(--spring);z-index:2}
+.card.sel .ck{background:#0b0b0c;border-color:#0b0b0c;transform:scale(1.12)}
+.ck svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .3s .05s}
+.card.sel .ck svg{stroke-dashoffset:0}
+.ov{position:absolute;inset:auto 10px 10px 10px;display:flex;gap:6px;justify-content:center;opacity:0;transform:translateY(8px);transition:.3s var(--spring)}
+.card:hover .ov,.card:focus-within .ov{opacity:1;transform:none}
+.chip{position:absolute;top:10px;right:10px;font:600 11px Inter,sans-serif;background:rgba(11,11,12,.78);color:#fff;border-radius:99px;padding:4px 9px;backdrop-filter:blur(6px)}
+.chip.hot{background:var(--err)}
+.nm{font-weight:600;font-size:15px;letter-spacing:-.02em;margin:12px 6px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt{color:var(--mut);font-size:12.5px;margin:0 6px}
+.sn{color:var(--mut);font-size:12.5px;margin:6px 6px 0;line-height:1.4}
+mark{background:#ffe27a;color:#111;border-radius:4px;padding:0 2px}
+.row{display:flex;flex-wrap:wrap;margin:8px 0 2px}
+.empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:56px 0}
+.dock{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);background:var(--btn);color:var(--btnink);border-radius:99px;padding:8px 8px 8px 22px;display:flex;align-items:center;gap:10px;transition:transform .5s var(--spring);z-index:20;box-shadow:0 20px 50px -10px rgba(0,0,0,.4);white-space:nowrap}
+.dock.on{transform:translate(-50%,0)}
+.dock .pill{background:var(--btnink);color:var(--btn)}
+.toast{position:fixed;top:calc(18px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-160%);background:var(--btn);color:var(--btnink);padding:12px 20px;border-radius:99px;font-weight:600;font-size:14px;transition:transform .5s var(--spring);z-index:60}
+.toast.on{transform:translate(-50%,0)}
+.drag{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);display:grid;place-items:center;font-size:clamp(32px,7vw,64px);font-weight:700;letter-spacing:-.05em;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
+.drag.on{opacity:1}
+.pal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;padding-top:16vh;z-index:70}
+.pal.on{display:flex}
+#shared{height:100dvh;max-width:none;padding:16px 24px 24px;display:flex;flex-direction:column;gap:12px}
+#shared[hidden]{display:none}
+#shared iframe{width:100%;flex:1;min-height:0;border:0;background:var(--panel)}
+#sharedError{color:var(--err)}
+body.shared>nav,body.shared>main:not(#shared),body.shared>.dock{display:none}
+.pb{width:min(560px,92vw);background:var(--bg);border-radius:24px;padding:10px;box-shadow:0 30px 80px -10px rgba(0,0,0,.5);animation:pop .35s var(--spring)}
+@keyframes pop{from{opacity:0;transform:scale(.93) translateY(10px)}}
+.pb input{width:100%;border:0;outline:0;background:var(--panel);border-radius:16px;padding:16px 18px;font:500 16px Inter,sans-serif;color:var(--ink)}
+.pb button{display:flex;justify-content:space-between;width:100%;border:0;background:none;color:var(--ink);font:500 15px Inter,sans-serif;padding:13px 16px;border-radius:14px;cursor:pointer;text-align:left}
+.pb button.a,.pb button:hover{background:var(--panel)}
+.pb span{color:var(--mut);font-size:12px}
+.note{text-align:center;color:var(--mut);font-size:12.5px;margin-top:40px}
+@media(max-width:560px){nav{padding:14px 16px}main{padding:24px 16px 140px}.ov{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo"><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/></svg></i>vault</div>
+  <div class="sp"></div>
+  <kbd>⌘K</kbd><button class="pill sm" id="navBtn">Add PDFs</button>
+</nav>
+<main id="shared" hidden>
+  <div class="bar" style="margin:0">
+    <strong id="sharedName"></strong>
+    <a id="sharedDownload" class="pill sm" download>Download PDF</a>
+    <a class="pill sm ghost" href="./">Open vault</a>
+  </div>
+  <p id="sharedError" hidden></p>
+  <iframe id="sharedFrame" title="Shared PDF"></iframe>
+</main>
+<main>
+  <h1>Every PDF<br>searchable<span class="t r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></span>
+  mergeable<span class="t b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a4 4 0 0 0 4 4h8M6 20v-6M15 10l3 4-3 4"/></svg></span>
+  private<span class="t y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span></h1>
+  <p class="sub">A local-first PDF vault. Full-text search, merge, split, rotate, self-destruct timers and portable pages. PDFs stay on this device unless you choose to share one.</p>
+
+  <section class="panel" id="drop">
+    <b>Drop PDFs anywhere</b>
+    <button class="pill" id="pick">Choose files</button>
+    <small id="msg">PDF only · stored on this device</small>
+    <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
+  </section>
+
+  <div class="bar">
+    <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b8b92" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
+    <input id="q" placeholder="Search inside every PDF…  ( / )" autocomplete="off"></label>
+    <span class="stats" id="stats"></span>
+  </div>
+  <div class="meter"><i id="mt"></i></div>
+  <div class="grid" id="grid"></div>
+  <p class="note">Share links embed small PDFs and require this app to be hosted at a public URL. Large links may be cut off by browsers or messaging apps; use Portable and send its downloaded HTML file for larger PDFs.</p>
+</main>
+
+<div class="dock" id="dock"><span id="dn"></span><button class="pill sm" id="bm">Merge</button><button class="pill sm ghost" id="bd">Delete</button><button class="pill sm ghost" id="bc">✕</button></div>
+<div class="toast" id="toast"></div>
+<div class="drag" id="drag">Drop to add</div>
+<div class="pal" id="pal"><div class="pb"><input id="pi" placeholder="Type a command…"><div id="pl"></div></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const h = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+let recs = [], sel = new Set(), q = '';
+
+/* ---- IndexedDB ---- */
+const opendb = () => new Promise((ok, no) => { const r = indexedDB.open('pdfvault', 1); r.onupgradeneeded = () => r.result.createObjectStore('f', {keyPath: 'id'}); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+const tx = async (m, fn) => { const d = await opendb(); return new Promise((ok, no) => { const t = d.transaction('f', m), o = fn(t.objectStore('f')); t.oncomplete = () => ok(o && o.result); t.onerror = () => no(t.error); }); };
+const put = r => tx('readwrite', s => s.put(r)), del = id => tx('readwrite', s => s.delete(id)), all = () => tx('readonly', s => s.getAll());
+
+/* ---- helpers ---- */
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random().toString(16);
+const fmt = n => n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+const MAX_SHARED_LINK_LENGTH = 1800;
+async function shareHref(r) {
+  if (!/^https?:$/.test(location.protocol)) throw new Error('Host this app at a public URL before creating share links');
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Could not read this PDF'));
+    reader.readAsDataURL(r.blob);
+  });
+  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  const link = new URL(location.href);
+  link.hash = new URLSearchParams({pdf: base64, name: r.name}).toString();
+  if (link.href.length > MAX_SHARED_LINK_LENGTH) throw new Error('This PDF makes a share link that may get cut off. Use Portable and send its downloaded HTML file instead.');
+  return link.href;
+}
+let tt; const toast = t => { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('on'), 2200); };
+const left = ms => ms < 36e5 ? Math.max(1, Math.round(ms / 6e4)) + 'm' : ms < 864e5 ? Math.round(ms / 36e5) + 'h' : Math.round(ms / 864e5) + 'd';
+const save = (blob, name) => { const a = h('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+
+/* ---- analyze: pages, text, thumbnail, hash ---- */
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+async function analyze(blob) {
+  const ab = await blob.arrayBuffer();
+  const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', ab))].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+  const o = {hash, pages: 0, text: '', words: 0, thumb: ''};
+  try {
+    const d = await pdfjsLib.getDocument({data: ab.slice(0)}).promise; o.pages = d.numPages;
+    const p1 = await d.getPage(1), vp = p1.getViewport({scale: .6}), c = h('canvas');
+    c.width = vp.width; c.height = vp.height;
+    await p1.render({canvasContext: c.getContext('2d'), viewport: vp}).promise; o.thumb = c.toDataURL('image/jpeg', .7);
+    for (let i = 1; i <= Math.min(d.numPages, 80); i++) { const tc = await (await d.getPage(i)).getTextContent(); o.text += tc.items.map(x => x.str).join(' ') + ' '; }
+    o.words = (o.text.match(/\S+/g) || []).length;
+  } catch (e) {}
+  return o;
+}
+async function ingest(blob, name, id) {
+  const info = await analyze(blob);
+  if (!id && recs.some(r => r.hash === info.hash)) return toast('Already in your vault');
+  const r = Object.assign({id: id || uid(), name, size: blob.size, at: Date.now(), blob, exp: 0}, info);
+  if (id) { const old = recs.find(x => x.id === id); r.at = old.at; r.exp = old.exp; recs = recs.filter(x => x.id !== id); }
+  await put(r); recs.unshift(r);
+}
+
+/* ---- adding files ---- */
+async function add(files) {
+  const f = [...files].filter(x => x.type === 'application/pdf' || /\.pdf$/i.test(x.name));
+  if (!f.length) return toast('PDF files only');
+  for (let i = 0; i < f.length; i++) { $('msg').textContent = 'Indexing ' + f[i].name + '…'; try { await ingest(new Blob([f[i]], {type: 'application/pdf'}), f[i].name); } catch (e) { toast('Could not read ' + f[i].name); } }
+  $('msg').textContent = 'PDF only · stored on this device'; render(); toast(f.length + (f.length > 1 ? ' files' : ' file') + ' indexed');
+}
+const inp = $('file'); $('pick').onclick = $('navBtn').onclick = () => inp.click(); inp.onchange = () => { add(inp.files); inp.value = ''; };
+let dc = 0; const ov = $('drag');
+addEventListener('dragenter', e => { e.preventDefault(); dc++; ov.classList.add('on'); $('drop').classList.add('over'); });
+addEventListener('dragleave', () => { if (--dc <= 0) { dc = 0; ov.classList.remove('on'); $('drop').classList.remove('over'); } });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); dc = 0; ov.classList.remove('on'); $('drop').classList.remove('over'); add(e.dataTransfer.files); });
+
+/* ---- PDF operations ---- */
+const load = async r => PDFLib.PDFDocument.load(await r.blob.arrayBuffer(), {ignoreEncryption: true});
+async function merge() {
+  const rs = recs.filter(r => sel.has(r.id)); if (rs.length < 2) return toast('Select 2+ files to merge');
+  toast('Merging…'); const out = await PDFLib.PDFDocument.create();
+  for (const r of rs) { const s = await load(r); (await out.copyPages(s, s.getPageIndices())).forEach(p => out.addPage(p)); }
+  await ingest(new Blob([await out.save()], {type: 'application/pdf'}), 'merged-' + rs.length + ' files.pdf'); sel.clear(); render(); toast('Merged ✓');
+}
+async function split(r) {
+  const v = prompt('Pages to extract (e.g. 1-3,5):', '1'); if (!v) return;
+  const s = await load(r), n = s.getPageCount(), idx = [];
+  v.split(',').forEach(p => { const [a, b] = p.split('-').map(x => parseInt(x)); for (let i = a; i <= (b || a); i++) if (i >= 1 && i <= n) idx.push(i - 1); });
+  if (!idx.length) return toast('No valid pages');
+  const out = await PDFLib.PDFDocument.create(); (await out.copyPages(s, idx)).forEach(p => out.addPage(p));
+  await ingest(new Blob([await out.save()], {type: 'application/pdf'}), r.name.replace(/\.pdf$/i, '') + ' (p.' + v + ').pdf'); render(); toast('Extracted ' + idx.length + ' pages');
+}
+async function rotate(r) {
+  const s = await load(r); s.getPages().forEach(p => p.setRotation(PDFLib.degrees((p.getRotation().angle + 90) % 360)));
+  await ingest(new Blob([await s.save()], {type: 'application/pdf'}), r.name, r.id); render(); toast('Rotated 90°');
+}
+async function portable(r) {
+  const b64 = await new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result.split(',')[1]); f.readAsDataURL(r.blob); });
+  const html = '<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' + r.name.replace(/</g, '') + '</title><style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%}</style><iframe id=f></iframe><script>var s=atob("' + b64 + '"),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);document.getElementById("f").src=URL.createObjectURL(new Blob([u],{type:"application/pdf"}));<' + '/script>';
+  save(new Blob([html], {type: 'text/html'}), r.name.replace(/\.pdf$/i, '') + '.html'); toast('Portable page saved');
+}
+const EXP = [0, 36e5, 864e5, 6048e5];
+function cycle(r) { const cur = r.exp ? EXP.findIndex((d, i) => i && r.exp - Date.now() <= d) : 0; const n = (cur + 1) % EXP.length; r.exp = n ? Date.now() + EXP[n] : 0; put(r); render(); toast(n ? 'Self-destructs in ' + left(EXP[n]) : 'Expiry removed'); }
+async function remove(ids) { for (const id of ids) { await del(id); sel.delete(id); } recs = recs.filter(r => !ids.includes(r.id)); render(); }
+const purge = () => { const d = recs.filter(r => r.exp && r.exp < Date.now()).map(r => r.id); if (d.length) { remove(d); toast(d.length + ' expired file(s) destroyed'); } };
+
+/* ---- render ---- */
+function render() {
+  const g = $('grid'), ql = q.trim().toLowerCase(); g.textContent = '';
+  const list = ql ? recs.filter(r => r.name.toLowerCase().includes(ql) || r.text.toLowerCase().includes(ql)) : recs;
+  if (!list.length) g.appendChild(h('div', 'empty', recs.length ? 'No matches inside your PDFs.' : 'Your vault is empty. Drop a PDF to begin.'));
+  list.forEach((r, i) => {
+    const c = h('div', 'card' + (sel.has(r.id) ? ' sel' : '')); c.style.setProperty('--i', Math.min(i, 12));
+    const th = h('div', 'th'); if (r.thumb) { const im = h('img'); im.src = r.thumb; im.alt = ''; th.appendChild(im); } else th.textContent = 'PDF';
+    const ck = h('div', 'ck'); ck.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>';
+    ck.onclick = () => { sel.has(r.id) ? sel.delete(r.id) : sel.add(r.id); c.classList.toggle('sel'); dock(); };
+    th.appendChild(ck);
+    if (r.exp) { const ch = h('div', 'chip' + (r.exp - Date.now() < 36e5 ? ' hot' : ''), '⏳ ' + left(r.exp - Date.now())); th.appendChild(ch); }
+    const o = h('div', 'ov'); const op = h('button', 'pill sm', 'Open'); op.onclick = async () => {
+      const tab = window.open('about:blank', '_blank');
+      if (!tab) return toast('Allow pop-ups to open the share link');
+      try { tab.location.href = await shareHref(r); } catch (e) { tab.close(); toast(e.message); }
+    };
+    const cp = h('button', 'pill sm ghost', 'Copy share link'); cp.onclick = async () => {
+      let link;
+      try { link = await shareHref(r); } catch (e) { toast(e.message); return; }
+      try { await navigator.clipboard.writeText(link); toast('Share link copied'); } catch { prompt('Copy share link:', link); }
+    };
+    o.append(op, cp); th.appendChild(o);
+    c.append(th, h('div', 'nm', r.name), h('div', 'mt', [r.pages ? r.pages + ' pages' : '', fmt(r.size), r.words ? r.words.toLocaleString() + ' words · ' + Math.max(1, Math.round(r.words / 230)) + ' min' : ''].filter(Boolean).join(' · ')));
+    if (ql && r.text) { const k = r.text.toLowerCase().indexOf(ql); if (k > -1) { const s = h('div', 'sn'); s.append('…' + r.text.slice(Math.max(0, k - 40), k), Object.assign(h('mark'), {textContent: r.text.slice(k, k + ql.length)}), r.text.slice(k + ql.length, k + ql.length + 60) + '…'); c.appendChild(s); } }
+    const row = h('div', 'row'); [['Rotate', () => rotate(r)], ['Split', () => split(r)], ['Timer', () => cycle(r)], ['Portable', () => portable(r)], ['Save', () => save(r.blob, r.name)], ['Delete', () => remove([r.id])]].forEach(([t, f]) => { const b = h('button', 'txt' + (t === 'Delete' ? ' del' : ''), t); b.onclick = f; row.appendChild(b); });
+    c.appendChild(row); g.appendChild(c);
+  });
+  const P = recs.reduce((a, r) => a + r.pages, 0), W = recs.reduce((a, r) => a + r.words, 0);
+  $('stats').textContent = recs.length ? recs.length + ' files · ' + P + ' pages · ' + W.toLocaleString() + ' words' : '';
+  dock(); meter();
+}
+function dock() { $('dock').classList.toggle('on', sel.size > 0); $('dn').textContent = sel.size + ' selected'; }
+async function meter() { try { const e = await navigator.storage.estimate(); $('mt').style.width = Math.max(2, Math.min(100, e.usage / e.quota * 100 * 40)) + '%'; } catch {} }
+$('q').oninput = e => { q = e.target.value; render(); };
+$('bm').onclick = merge; $('bd').onclick = () => confirm('Delete ' + sel.size + ' file(s)?') && remove([...sel]); $('bc').onclick = () => { sel.clear(); render(); };
+
+/* ---- command palette ---- */
+const CMD = [['Add PDFs', '', () => inp.click()], ['Select all', '', () => { recs.forEach(r => sel.add(r.id)); render(); }], ['Merge selected', '', merge], ['Clear selection', '', () => { sel.clear(); render(); }], ['Delete selected', '', () => sel.size && confirm('Delete?') && remove([...sel])], ['Delete everything', '', () => confirm('Wipe the whole vault?') && remove(recs.map(r => r.id))]];
+let pi = 0; const pal = $('pal'), pin = $('pi');
+function pl() { const v = pin.value.toLowerCase(), l = CMD.filter(c => c[0].toLowerCase().includes(v)); pi = Math.min(pi, l.length - 1); const box = $('pl'); box.textContent = ''; l.forEach((c, i) => { const b = h('button', i === pi ? 'a' : '', c[0]); b.onclick = () => { pal.classList.remove('on'); c[2](); }; box.appendChild(b); }); return l; }
+const openPal = () => { pal.classList.add('on'); pin.value = ''; pi = 0; pl(); pin.focus(); };
+pin.oninput = () => { pi = 0; pl(); };
+pal.onclick = e => { if (e.target === pal) pal.classList.remove('on'); };
+addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); pal.classList.contains('on') ? pal.classList.remove('on') : openPal(); }
+  else if (e.key === 'Escape') pal.classList.remove('on');
+  else if (pal.classList.contains('on')) { const l = pl(); if (e.key === 'ArrowDown') { pi = (pi + 1) % l.length; pl(); e.preventDefault(); } else if (e.key === 'ArrowUp') { pi = (pi - 1 + l.length) % l.length; pl(); e.preventDefault(); } else if (e.key === 'Enter' && l[pi]) { pal.classList.remove('on'); l[pi][2](); } }
+  else if (e.key === '/' && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); $('q').focus(); }
+});
+
+function openSharedPdf() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  if (!params.has('pdf')) return false;
+  $('shared').hidden = false;
+  document.body.classList.add('shared');
+  try {
+    const encoded = (params.get('pdf') || '').replace(/ /g, '+');
+    if (location.href.length > MAX_SHARED_LINK_LENGTH || !/^[A-Za-z0-9+/_-]*={0,2}$/.test(encoded)) throw new Error('This share link is too large or invalid. Create a smaller share link or use the Portable HTML file.');
+    const unpadded = encoded.replace(/=+$/, '').replace(/-/g, '+').replace(/_/g, '/');
+    if (unpadded.length % 4 === 1) throw new Error('This share link is invalid or incomplete');
+    const base64 = unpadded + '='.repeat((4 - unpadded.length % 4) % 4);
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    if (new TextDecoder().decode(bytes.subarray(0, 5)) !== '%PDF-') throw new Error('This share link does not contain a supported PDF');
+    const blob = new Blob([bytes], {type: 'application/pdf'});
+    const name = params.get('name') || 'shared.pdf';
+    $('sharedName').textContent = name;
+    $('sharedDownload').href = URL.createObjectURL(blob);
+    $('sharedDownload').download = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
+    $('sharedFrame').src = URL.createObjectURL(blob);
+    document.title = name + ' — PDF Vault';
+  } catch (e) {
+    $('sharedError').hidden = false;
+    $('sharedError').textContent = e.message;
+    $('sharedFrame').hidden = true;
+  }
+  return true;
+}
+(async () => { if (openSharedPdf()) return; try { recs = (await all()).sort((a, b) => b.at - a.at); } catch (e) { toast('Browser storage is unavailable'); } purge(); render(); setInterval(purge, 20000); })();
+</script>
+</body>
+</html>
