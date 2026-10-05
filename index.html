@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PDF Vault</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -15,8 +16,8 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
 nav{max-width:1180px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;gap:16px}
 .logo{font-weight:800;font-size:20px;letter-spacing:-.04em;display:flex;align-items:center;gap:8px}
-.logo i{width:26px;height:26px;border-radius:8px;background:var(--ink);display:grid;place-items:center}
-.logo i svg{stroke:var(--bg)}
+.logo i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
+.logo i svg{width:30px;height:30px;display:block}
 .sp{flex:1}
 kbd{font:600 11px Inter,sans-serif;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
 .pill{border:0;background:var(--btn);color:var(--btnink);font:600 15px Inter,system-ui,sans-serif;padding:12px 22px;border-radius:99px;cursor:pointer;transition:transform .2s var(--spring),opacity .15s}
@@ -92,7 +93,7 @@ body.shared>nav,body.shared>main:not(#shared),body.shared>.dock{display:none}
 </head>
 <body>
 <nav>
-  <div class="logo"><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/></svg></i>vault</div>
+  <div class="logo"><i><svg viewBox="0 0 40 40" role="img" aria-label="PDF Vault"><rect width="40" height="40" rx="12" fill="#f6f3eb"/><path d="M11 12 20 29 29 12" fill="none" stroke="#24243b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><rect x="27.5" y="9.5" width="4" height="4" rx="1" fill="#ff765e"/></svg></i>vault</div>
   <div class="sp"></div>
   <kbd>⌘K</kbd><button class="pill sm" id="navBtn">Add PDFs</button>
 </nav>
